@@ -1,0 +1,21 @@
+# Build dosyaları
+bin/
+obj/
+
+# Kullanıcıya özel dosyalar
+*.user
+*.suo
+*.cache
+*.log
+*.vs/
+
+# Yedek ve geçici dosyalar
+*Backup.csproj
+*Backup.csproj.user
+
+# Konfigürasyon dosyaları (hassas bilgiler içeriyorsa)
+appsettings.json
+appsettings.Development.json
+
+# Profil fotoğrafları (opsiyonel)
+ProfilePhotos/

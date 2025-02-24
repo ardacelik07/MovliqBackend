@@ -1,0 +1,227 @@
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
+using RunningApplicationNew.Entity.Dtos;
+using RunningApplicationNew.Entity;
+using RunningApplicationNew.Helpers;
+using System;
+using RunningApplicationNew.DataLayer;
+using RunningApplicationNew.IRepository;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
+using RunningApplicationNew.RepositoryLayer;
+
+
+namespace RunningApplicationNew.Controllers
+{
+
+    [Route("api/[controller]")]
+    [ApiController]
+    public class RaceRoomController : ControllerBase
+    {
+
+        private readonly IUserRepository _userRepository;
+        private readonly IRaceRoomRepository _raceRoomRepository;
+        private readonly IUserResultsRepository _userResultsRepository;
+        private readonly IJwtHelper _jwtHelper;
+        private readonly IEmailHelper _emailhelper;
+
+        public RaceRoomController(IUserRepository userRepository, IRaceRoomRepository raceRoomRepository, IJwtHelper jwtHelper, IEmailHelper emailHelper, IUserResultsRepository userResultsRepository)
+        {
+            _userRepository = userRepository;
+            _jwtHelper = jwtHelper;
+            _emailhelper = emailHelper;
+            _raceRoomRepository = raceRoomRepository;
+            _userResultsRepository = userResultsRepository;
+        }
+        [HttpPost("createRoom")]
+        public async Task CreateRaceRoom([FromQuery] string roomType)
+        {
+            var nextStartTime = DateTime.Now; 
+
+            var room = await _raceRoomRepository.CreateRoomAsync(nextStartTime, roomType);
+
+            // Odada en az 10 kişi olmalı
+                await _raceRoomRepository.SaveChangesAsync();
+            
+        }
+        [HttpGet("GetAllRooms")]
+        public async Task<IActionResult> GetAllRooms()
+        {
+            
+
+            var room = await _raceRoomRepository.GetActiveRoomsAsync();
+
+            return Ok(room);
+   
+
+        }
+        [HttpGet("join-room/{roomId}")]
+        [Authorize]
+        public async Task<IActionResult> JoinRoom(int roomId)
+        {
+            var room = await _raceRoomRepository.GetByIdAsync(roomId);
+            if (room == null || !room.IsActive)
+            {
+                return BadRequest("Bu oda aktif değil.");
+            }
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized("Token bulunamadı.");
+
+            // Token'ı doğrula ve email bilgisi al
+            var emailFromToken = _jwtHelper.ValidateTokenAndGetEmail(token);
+            if (emailFromToken == null)
+                return Unauthorized("Geçersiz token.");
+
+            // Token'dan alınan email ile kullanıcıyı al
+            var user = await _userRepository.GetByEmailAsync(emailFromToken);
+            if (user == null)
+                return Unauthorized("Kullanıcı bulunamadı.");
+            var userinroom = await _raceRoomRepository.GetRoomParticipantByEmailAsync(roomId, user.Email);
+            if (userinroom == null)
+            {
+                var participantsCount = await _raceRoomRepository.GetRoomParticipantsCountAsync(roomId);
+
+                if (participantsCount < 10)
+                {
+                    await _raceRoomRepository.AddUserToRoomAsync(user.Id, roomId);
+                    return Ok("Odaya başarıyla katıldınız.");
+                }
+                else
+                {
+                    return BadRequest("oda dolu");
+                }
+
+            }
+            else
+            {
+                return BadRequest("zaten odadasın");
+            }
+           
+           
+
+           // return BadRequest("Oda dolu, başka bir odaya katılın.");
+        }
+        [HttpGet("get-room-participants/{roomId}")]
+        [Authorize]
+        public async Task<IActionResult> GetRoomParticipants(int roomId)
+        {
+            // Odayı al
+            var room = await _raceRoomRepository.GetByIdAsync(roomId);
+            if (room == null)
+            {
+                return NotFound("Oda bulunamadı.");
+            }
+
+
+            // Katılımcıları al
+            var participants = await _raceRoomRepository.GetRoomParticipantsAsync(roomId);
+
+            if (participants == null || !participants.Any())
+            {
+                return Ok("Bu odada henüz katılımcı yok.");
+            }
+            var response = new
+            {
+                RoomId = room.Id,
+                RoomName = room.RoomName,
+                Participants = participants.Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.Email,
+                    p.ProfilePicturePath
+                })
+            };
+
+            // Katılımcıları döndür
+
+
+            if (!response.Participants.Any())
+            {
+                return Ok(new
+                {
+                    RoomId = room.Id,
+                    RoomName = room.RoomName,
+                    Message = "Bu odada henüz katılımcı yok."
+                });
+            }
+
+            return Ok(response);
+        }
+        [HttpPost("get-User-final-Results")]
+        [Authorize]
+        public async Task<IActionResult> GetRoomParticipant(UserResultsDto results)
+        {
+            // Odayı al
+            var room = await _raceRoomRepository.GetByIdAsync(results.roomId);
+            if (room == null)
+            {
+                return NotFound("Oda bulunamadı.");
+            }
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized("Token bulunamadı.");
+
+            // Token'ı doğrula ve email bilgisi al
+            var emailFromToken = _jwtHelper.ValidateTokenAndGetEmail(token);
+            if (emailFromToken == null)
+                return Unauthorized("Geçersiz token.");
+
+            // Katılımcıları al
+            var participant = await _raceRoomRepository.GetRoomParticipantByEmailAsync(results.roomId, emailFromToken);
+
+
+
+            if (participant == null)
+            {
+
+                return NotFound("bu odada bu kullanıcı yok");
+            }
+            // aynı oda için iki kere result atmayı engelle
+            var checkroom = await _userResultsRepository.GetRoomNamesByEmailAsync(participant.Email);
+            if (checkroom.Contains(room.RoomName))
+            {
+                return BadRequest("Bu oda için zaten sonucun var.");
+            }
+
+            var userResults = new UserResults
+            {
+                RoomName = room.RoomName,
+                UserName = participant.UserName,
+                Email = participant.Email,
+                steps = results.steps,
+                distancekm = results.DistanceKm,
+                Rank = results.Rank,
+                StartTime = room.StartTime,
+                RoomType = room.Type,
+                
+            };
+
+            await _userResultsRepository.AddAsync(userResults);
+            await _userResultsRepository.SaveChangesAsync();
+
+            // Katılımcıları döndür
+
+
+
+
+            return Ok(userResults);
+        }
+        [HttpGet("GetAllUserResults")]
+        public async Task<IActionResult> GetAllUserResults()
+        {
+
+
+            var results = await _userResultsRepository.GetAllAsync();
+
+            return Ok(results);
+
+
+        }
+
+    }
+}
