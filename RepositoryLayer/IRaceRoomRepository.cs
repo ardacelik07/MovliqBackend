@@ -10,7 +10,10 @@ namespace RunningApplicationNew.RepositoryLayer
         Task AddUserToRoomAsync(int userId, int raceRoomId);
         Task<int> GetRoomParticipantsCountAsync(int raceRoomId);
         Task<List<User>> GetRoomParticipantsAsync(int roomId);
-
+        Task<List<RaceRoom>> GetActiveRoomsAsyncByType(string type);
         Task<User> GetRoomParticipantByEmailAsync(int roomId, string email);
+        Task SetRoomInactiveAsync(int roomId);
+
+
     }
 }

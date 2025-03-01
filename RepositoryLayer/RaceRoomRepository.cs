@@ -16,6 +16,13 @@ namespace RunningApplicationNew.RepositoryLayer
             return await _context.Set<RaceRoom>().Where(r => r.IsActive).ToListAsync();
         }
 
+        public async Task<List<RaceRoom>> GetActiveRoomsAsyncByType(string type)
+        {
+            return await _context.Set<RaceRoom>()
+                .Where(r => r.IsActive && r.Type == type)
+                .ToListAsync();
+        }
+
         public async Task<RaceRoom> CreateRoomAsync(DateTime startTime, string type)
         {
             var room = new RaceRoom
@@ -64,5 +71,18 @@ namespace RunningApplicationNew.RepositoryLayer
                                  .Select(rru => rru.User)
                                  .FirstOrDefaultAsync();
         }
+
+        public async Task SetRoomInactiveAsync(int roomId)
+        {
+            var room = await _context.Set<RaceRoom>().FindAsync(roomId);
+            if (room != null)
+            {
+                room.IsActive = false;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+
+
     }
 }

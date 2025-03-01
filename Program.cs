@@ -90,11 +90,13 @@ builder.Services.AddScoped<IEmailHelper, EmailHelper>();
 
 var app = builder.Build();
 
-// Swagger yapýlandýrmasý
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "LCARS Command Processor");
+    });
 }
 
 app.UseHttpsRedirection();

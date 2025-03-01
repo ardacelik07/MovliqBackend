@@ -43,7 +43,8 @@ namespace RunningApplicationNew.Controllers
 
             var room = await _raceRoomRepository.CreateRoomAsync(nextStartTime, roomType);
 
-            // Odada en az 10 kişi olmalı
+                
+
                 await _raceRoomRepository.SaveChangesAsync();
             
         }
@@ -56,6 +57,18 @@ namespace RunningApplicationNew.Controllers
 
             return Ok(room);
    
+
+        }
+
+        [HttpGet("GetRoom/{roomType}")]
+        public async Task<IActionResult> GetRoom(string roomType)
+        {
+
+
+            var room = await _raceRoomRepository.GetActiveRoomsAsyncByType(roomType);
+
+            return Ok(room);
+
 
         }
         [HttpGet("join-room/{roomId}")]
@@ -80,31 +93,51 @@ namespace RunningApplicationNew.Controllers
             var user = await _userRepository.GetByEmailAsync(emailFromToken);
             if (user == null)
                 return Unauthorized("Kullanıcı bulunamadı.");
+            
             var userinroom = await _raceRoomRepository.GetRoomParticipantByEmailAsync(roomId, user.Email);
             if (userinroom == null)
             {
                 var participantsCount = await _raceRoomRepository.GetRoomParticipantsCountAsync(roomId);
 
-                if (participantsCount < 10)
+                if (participantsCount < 2)
                 {
                     await _raceRoomRepository.AddUserToRoomAsync(user.Id, roomId);
-                    return Ok("Odaya başarıyla katıldınız.");
+                    
+                    // Eğer bu kişi odaya katıldıktan sonra oda dolduysa (2 kişi olduysa)
+                    if (participantsCount + 1 == 2)
+                    {
+                        // Odayı hemen inactive yap
+                        await _raceRoomRepository.SetRoomInactiveAsync(roomId);
+                        
+                        // 10 saniye sonra yarışı başlatacağımızı belirt
+                        return Ok(new { 
+                            message = "Odaya başarıyla katıldınız. Oda doldu, 10 saniye içinde yarış başlayacak!", 
+                            countdownStarted = true,
+                            roomId = roomId 
+                        });
+                    }
+                    
+                    return Ok(new { 
+                        message = "Odaya başarıyla katıldınız.", 
+                        countdownStarted = false,
+                        roomId = roomId 
+                    });
                 }
                 else
                 {
                     return BadRequest("oda dolu");
                 }
-
+                
             }
             else
             {
                 return BadRequest("zaten odadasın");
             }
-           
-           
-
-           // return BadRequest("Oda dolu, başka bir odaya katılın.");
         }
+
+
+
+
         [HttpGet("get-room-participants/{roomId}")]
         [Authorize]
         public async Task<IActionResult> GetRoomParticipants(int roomId)
@@ -119,6 +152,7 @@ namespace RunningApplicationNew.Controllers
 
             // Katılımcıları al
             var participants = await _raceRoomRepository.GetRoomParticipantsAsync(roomId);
+            var participantscount = await _raceRoomRepository.GetRoomParticipantsCountAsync(roomId);
 
             if (participants == null || !participants.Any())
             {
@@ -133,7 +167,10 @@ namespace RunningApplicationNew.Controllers
                     p.Id,
                     p.Name,
                     p.Email,
-                    p.ProfilePicturePath
+                    p.ProfilePicturePath,
+                    p.Rank,
+                    p.steps,
+                    p.distancekm
                 })
             };
 
@@ -149,6 +186,7 @@ namespace RunningApplicationNew.Controllers
                     Message = "Bu odada henüz katılımcı yok."
                 });
             }
+           
 
             return Ok(response);
         }
