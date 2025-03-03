@@ -12,7 +12,9 @@ using RunningApplicationNew.IRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using RunningApplicationNew.RepositoryLayer;
-
+using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
+using RunningApplicationNew.Hubs;
 
 namespace RunningApplicationNew.Controllers
 {
@@ -25,23 +27,25 @@ namespace RunningApplicationNew.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IRaceRoomRepository _raceRoomRepository;
         private readonly IUserResultsRepository _userResultsRepository;
+        private readonly IHubContext<RaceHub> _hubContext;
         private readonly IJwtHelper _jwtHelper;
         private readonly IEmailHelper _emailhelper;
 
-        public RaceRoomController(IUserRepository userRepository, IRaceRoomRepository raceRoomRepository, IJwtHelper jwtHelper, IEmailHelper emailHelper, IUserResultsRepository userResultsRepository)
+        public RaceRoomController(IUserRepository userRepository, IRaceRoomRepository raceRoomRepository, IJwtHelper jwtHelper, IEmailHelper emailHelper, IUserResultsRepository userResultsRepository, IHubContext<RaceHub> hubContext)
         {
             _userRepository = userRepository;
             _jwtHelper = jwtHelper;
             _emailhelper = emailHelper;
             _raceRoomRepository = raceRoomRepository;
             _userResultsRepository = userResultsRepository;
+            _hubContext = hubContext;
         }
         [HttpPost("createRoom")]
-        public async Task CreateRaceRoom([FromQuery] string roomType)
+        public async Task CreateRaceRoom([FromQuery] string roomType, int duration)
         {
             var nextStartTime = DateTime.Now; 
 
-            var room = await _raceRoomRepository.CreateRoomAsync(nextStartTime, roomType);
+            var room = await _raceRoomRepository.CreateRoomAsync(nextStartTime, roomType,duration);
 
                 
 
@@ -259,6 +263,72 @@ namespace RunningApplicationNew.Controllers
             return Ok(results);
 
 
+        }
+
+        [HttpPost("match-room")]
+        [Authorize]
+        public async Task<IActionResult> MatchRoom([FromBody] RoomMatchRequestDto request)
+        {
+            try
+            {
+                // Kullanıcının email bilgisini JWT'den al
+                var email = User.FindFirstValue(ClaimTypes.Email);
+                var user = await _userRepository.GetByEmailAsync(email);
+                
+                if (user == null)
+                    return NotFound(new { message = "Kullanıcı bulunamadı." });
+                    
+                // Belirtilen kriterlere göre aktif bir oda ara
+                var activeRooms = await _raceRoomRepository.GetActiveRoomsAsyncByType(request.RoomType);
+                var eligibleRoom = activeRooms
+                    .Where(r => r.Duration == request.Duration)
+                    .Where(r => r.IsActive) // Henüz başlamamış odalar
+                    .FirstOrDefault(r => _raceRoomRepository.GetRoomParticipantsCountAsync(r.Id).Result < r.MaxParticipants);
+                    
+                // Uygun bir oda bulundu mu?
+                if (eligibleRoom != null)
+                {
+                    // Kullanıcıyı odaya ekle
+                    await _raceRoomRepository.AddUserToRoomAsync(user.Id, eligibleRoom.Id);
+                    
+                    // Odadaki katılımcı sayısını kontrol et
+                    int participantCount = await _raceRoomRepository.GetRoomParticipantsCountAsync(eligibleRoom.Id);
+                    
+                    // Oda dolu mu? Dolu ise yarışı başlat
+                    if (participantCount == eligibleRoom.MinParticipants)
+                    {
+                        // Yarışı başlat (StartTime'ı şimdiden 10 saniye sonraya ayarla)
+                        eligibleRoom.IsActive = false;
+                        eligibleRoom.StartTime = DateTime.Now.AddSeconds(10); 
+                        await _raceRoomRepository.SaveChangesAsync();
+                        
+                        // SignalR ile odadaki tüm kullanıcılara bildirim gönder
+                        await _hubContext.Clients.Group($"room-{eligibleRoom.Id}").SendAsync("RaceStarting", eligibleRoom.Id, 10);
+
+                    }
+                    
+                    return Ok(new { roomId = eligibleRoom.Id, startTime = eligibleRoom.StartTime });
+                }
+                else
+                {
+                    // Uygun oda bulunamadı, yeni oda oluştur
+                    var startTime = DateTime.Now.AddMinutes(2); // 2 dakika bekleme süresi
+                    var newRoom = await _raceRoomRepository.CreateRoomAsync(startTime, request.RoomType, request.Duration);
+                    
+                    // Kullanıcıyı yeni odaya ekle
+                    await _raceRoomRepository.AddUserToRoomAsync(user.Id, newRoom.Id);
+                    
+                    return Ok(new { 
+                        roomId = newRoom.Id, 
+                        startTime = newRoom.StartTime,
+                        message = "Yeni oda oluşturuldu ve bekleme salonuna alındınız." 
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Bir hata oluştu: {ex.Message}" });
+            }
         }
 
     }

@@ -1,24 +1,35 @@
-using Microsoft.EntityFrameworkCore;
-using RunningApplicationNew.DataLayer;
-using RunningApplicationNew.IRepository;
-using RunningApplicationNew.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.OpenApi.Models;
-using Hangfire;
-using RunningApplicationNew.Controllers;
+using RunningApplicationNew.DataLayer;
+using RunningApplicationNew.Helpers;
+using RunningApplicationNew.Hubs;
+using RunningApplicationNew.IRepository;
 using RunningApplicationNew.RepositoryLayer;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
-
+using RunningApplicationNew.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// CORS PolitikasÄ± TanÄ±mla
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(MyAllowSpecificOrigins, policy =>
+    {
+        policy.WithOrigins("http://127.0.0.1:8080", "http://localhost:8080") // Ä°stemcinin adresini yaz
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // Credentials'Ä± etkinleÅŸtir
+    });
+});
+
 
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Swagger ve OpenAPI ayarlarý
+// Swagger ve OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -29,7 +40,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "An API for the Running Application"
     });
 
-    // JWT için güvenlik tanýmý ekle
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -40,7 +50,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Enter 'Bearer' followed by a space and your JWT token."
     });
 
-    // JWT için güvenlik gereksinimi ekle
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -61,11 +70,11 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Repository katmanlarýný DI'ye ekle
 builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRaceRoomRepository, RaceRoomRepository>();
 builder.Services.AddScoped<IUserResultsRepository, UserResultsRepository>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -81,12 +90,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// JwtHelper sýnýfýný DI'ye ekle
 builder.Services.AddScoped<IJwtHelper, JwtHelper>();
 builder.Services.AddScoped<IEmailHelper, EmailHelper>();
-
-
-
+builder.Services.AddSingleton<RaceUpdateService>();
+builder.Services.AddHostedService<RaceUpdateService>();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -100,9 +108,15 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 }
 
 app.UseHttpsRedirection();
+
+// CORS KullanÄ±mÄ± Aktif Et!
+app.UseCors(MyAllowSpecificOrigins);
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.UseWebSockets();
+app.MapHub<RaceHub>("/racehub");
 
 app.Run();

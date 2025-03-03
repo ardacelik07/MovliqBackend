@@ -15,7 +15,10 @@ namespace RunningApplicationNew.RepositoryLayer
         {
             return await _context.Set<RaceRoom>().Where(r => r.IsActive).ToListAsync();
         }
-
+        public async Task<List<RaceRoom>> GetRacesRoomsAsync()
+        {
+            return await _context.Set<RaceRoom>().Where(r => !r.IsActive).ToListAsync();
+        }
         public async Task<List<RaceRoom>> GetActiveRoomsAsyncByType(string type)
         {
             return await _context.Set<RaceRoom>()
@@ -23,7 +26,7 @@ namespace RunningApplicationNew.RepositoryLayer
                 .ToListAsync();
         }
 
-        public async Task<RaceRoom> CreateRoomAsync(DateTime startTime, string type)
+        public async Task<RaceRoom> CreateRoomAsync(DateTime startTime, string type, int duration)
         {
             var room = new RaceRoom
             {
@@ -31,7 +34,8 @@ namespace RunningApplicationNew.RepositoryLayer
                 CreatedAt = DateTime.Now,
                 StartTime = startTime,
                 IsActive = true,
-                Type = type
+                Type = type,
+                Duration = duration
                 
             };
 
@@ -77,12 +81,38 @@ namespace RunningApplicationNew.RepositoryLayer
             var room = await _context.Set<RaceRoom>().FindAsync(roomId);
             if (room != null)
             {
-                room.IsActive = false;
+                room.IsActive = true; // ODA İNAKTİF YAPILMALI
+
+                // Katılımcıların istatistiklerini sıfırla
+                var participants = await GetRoomParticipantsAsync(roomId);
+                foreach (var participant in participants)
+                {
+                    participant.distancekm = 0;
+                    participant.steps = 0;
+                    _context.Set<User>().Update(participant);
+                }
+
+                // TÜM DEĞİŞİKLİKLERİ BİR KEZ KAYDET
                 await _context.SaveChangesAsync();
+
+                Console.WriteLine($"Oda {roomId} inaktif yapıldı ve {participants.Count} kullanıcının istatistikleri sıfırlandı.");
             }
         }
 
 
+
+
+        public async Task UpdateUserStatsAsync(int userId, int roomId, double distance, int steps)
+        {
+            var user = await _context.Set<User>().FindAsync(userId);
+            if (user != null)
+            {
+                user.distancekm = distance;
+                user.steps = steps;
+                _context.Set<User>().Update(user);
+                await _context.SaveChangesAsync();
+            }
+        }
 
     }
 }

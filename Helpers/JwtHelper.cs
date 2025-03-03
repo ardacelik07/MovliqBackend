@@ -26,6 +26,7 @@ namespace RunningApplicationNew.Helpers
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
+            new Claim("userId", user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Name + " " + user.SurName),
             new Claim("Username", user.UserName ?? string.Empty)
         };
