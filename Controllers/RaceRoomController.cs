@@ -288,6 +288,12 @@ namespace RunningApplicationNew.Controllers
                 // Uygun bir oda bulundu mu?
                 if (eligibleRoom != null)
                 {
+                    var userınRoom = await _raceRoomRepository.GetRoomParticipantByEmailAsync(eligibleRoom.Id,email);
+
+                    if(userınRoom != null)
+                    {
+                        return BadRequest("zaten odadasınız");
+                    }
                     // Kullanıcıyı odaya ekle
                     await _raceRoomRepository.AddUserToRoomAsync(user.Id, eligibleRoom.Id);
                     
