@@ -57,7 +57,7 @@ namespace RunningApplicationNew.Controllers
         {
             
 
-            var room = await _raceRoomRepository.GetActiveRoomsAsync();
+            var room = await _raceRoomRepository.GetAllRoomsAsync();
 
             return Ok(room);
    
@@ -282,7 +282,7 @@ namespace RunningApplicationNew.Controllers
                 var activeRooms = await _raceRoomRepository.GetActiveRoomsAsyncByType(request.RoomType);
                 var eligibleRoom = activeRooms
                     .Where(r => r.Duration == request.Duration)
-                    .Where(r => r.IsActive) // Henüz başlamamış odalar
+                    .Where(r => r.Status==1) // Henüz başlamamış odalar
                     .FirstOrDefault(r => _raceRoomRepository.GetRoomParticipantsCountAsync(r.Id).Result < r.MaxParticipants);
                     
                 // Uygun bir oda bulundu mu?
@@ -304,7 +304,7 @@ namespace RunningApplicationNew.Controllers
                     if (participantCount == eligibleRoom.MinParticipants)
                     {
                         // Yarışı başlat (StartTime'ı şimdiden 10 saniye sonraya ayarla)
-                        eligibleRoom.IsActive = false;
+                        eligibleRoom.Status = 2;
                         eligibleRoom.StartTime = DateTime.Now.AddSeconds(10); 
                         await _raceRoomRepository.SaveChangesAsync();
                         
