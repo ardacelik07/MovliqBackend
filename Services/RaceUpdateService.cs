@@ -15,7 +15,7 @@ namespace RunningApplicationNew.Services
     {
         private readonly IHubContext<RaceHub> _hubContext;
         private readonly IServiceScopeFactory _scopeFactory; // Repository yerine bunu kullanıyoruz
-        private readonly TimeSpan _updateInterval = TimeSpan.FromSeconds(10);
+        private readonly TimeSpan _updateInterval = TimeSpan.FromSeconds(1);
 
         public RaceUpdateService(
             IHubContext<RaceHub> hubContext,

@@ -20,14 +20,27 @@ namespace RunningApplicationNew.Hubs
             _raceRoomRepository = raceRoomRepository;
             _userRepository = userRepository;
         }
-        
+
         // Odaya katılma
         public async Task JoinRoom(int roomId)
         {
+            // Kullanıcının email'ini al
+            var email = Context.User.FindFirstValue(ClaimTypes.Email);
+            var user = await _userRepository.GetByEmailAsync(email);
+
+            // Odaya ekle
             await Groups.AddToGroupAsync(Context.ConnectionId, $"room-{roomId}");
-            await Clients.Group($"room-{roomId}").SendAsync("UserJoined", Context.User.Identity.Name);
+
+            // Diğer kullanıcılara bildir
+            await Clients.OthersInGroup($"room-{roomId}").SendAsync("UserJoined", user.UserName);
+
+            // Odadaki tüm katılımcıları al
+            var participants = await _raceRoomRepository.GetRoomParticipantNamesAsync(roomId);
+
+            // Sadece yeni kullanıcıya mevcut katılımcıları gönder
+            await Clients.Caller.SendAsync("RoomParticipants", participants);
         }
-        
+
         // Odadan ayrılma
         public async Task LeaveRoom(int roomId)
         {

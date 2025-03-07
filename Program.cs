@@ -18,10 +18,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(MyAllowSpecificOrigins, policy =>
     {
-        policy.WithOrigins("http://127.0.0.1:8080", "http://localhost:8080") // İstemcinin adresini yaz
+        policy.AllowAnyOrigin() // İstemcinin adresini yaz
               .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials(); // Credentials'ı etkinleştir
+              .AllowAnyHeader();
+              
     });
 });
 

@@ -25,6 +25,11 @@ namespace RunningApplicationNew.RepositoryLayer
                 .Where(r => r.IsActive && r.Type == type)
                 .ToListAsync();
         }
+        public async Task<List<string>> GetRoomParticipantNamesAsync(int roomId)
+        {
+            var participants = await GetRoomParticipantsAsync(roomId);
+            return participants.Select(p => p.UserName).ToList();
+        }
 
         public async Task<RaceRoom> CreateRoomAsync(DateTime startTime, string type, int duration)
         {
