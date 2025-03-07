@@ -7,6 +7,7 @@ namespace RunningApplicationNew.RepositoryLayer
     {
         Task<List<RaceRoom>> GetActiveRoomsAsync();
         Task<List<RaceRoom>> GetRacesRoomsAsync();
+        Task<List<RaceRoom>> GetAllRoomsAsync();
         Task<RaceRoom> CreateRoomAsync(DateTime startTime,string type,int duration);
         Task AddUserToRoomAsync(int userId, int raceRoomId);
         Task<int> GetRoomParticipantsCountAsync(int raceRoomId);

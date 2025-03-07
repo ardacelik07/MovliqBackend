@@ -13,16 +13,20 @@ namespace RunningApplicationNew.RepositoryLayer
 
         public async Task<List<RaceRoom>> GetActiveRoomsAsync()
         {
-            return await _context.Set<RaceRoom>().Where(r => r.IsActive).ToListAsync();
+            return await _context.Set<RaceRoom>().Where(r => r.Status==1).ToListAsync();
         }
         public async Task<List<RaceRoom>> GetRacesRoomsAsync()
         {
-            return await _context.Set<RaceRoom>().Where(r => !r.IsActive).ToListAsync();
+            return await _context.Set<RaceRoom>().Where(r => r.Status==2).ToListAsync();
+        }
+        public async Task<List<RaceRoom>> GetAllRoomsAsync()
+        {
+            return await _context.Set<RaceRoom>().ToListAsync();
         }
         public async Task<List<RaceRoom>> GetActiveRoomsAsyncByType(string type)
         {
             return await _context.Set<RaceRoom>()
-                .Where(r => r.IsActive && r.Type == type)
+                .Where(r => r.Status==1 && r.Type == type)
                 .ToListAsync();
         }
         public async Task<List<string>> GetRoomParticipantNamesAsync(int roomId)
@@ -39,6 +43,7 @@ namespace RunningApplicationNew.RepositoryLayer
                 CreatedAt = DateTime.Now,
                 StartTime = startTime,
                 IsActive = true,
+                Status = 1, // Beklemede
                 Type = type,
                 Duration = duration
                 
@@ -86,7 +91,8 @@ namespace RunningApplicationNew.RepositoryLayer
             var room = await _context.Set<RaceRoom>().FindAsync(roomId);
             if (room != null)
             {
-                room.IsActive = true; // ODA İNAKTİF YAPILMALI
+                room.Status = 3; // Yarış bitti
+                
 
                 // Katılımcıların istatistiklerini sıfırla
                 var participants = await GetRoomParticipantsAsync(roomId);
