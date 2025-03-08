@@ -18,14 +18,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(MyAllowSpecificOrigins, policy =>
     {
-<<<<<<< HEAD
-        policy.AllowAnyOrigin() // İstemcinin adresini yaz
-=======
-        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5500") // İstemcinin adresini yaz
->>>>>>> 2fb1da6f69713c8198460147f60330aa98a7448d
+        policy.WithOrigins("https://*.replit.app", "https://*.repl.co")
+              .SetIsOriginAllowedToAllowWildcardSubdomains()
+              .AllowAnyOrigin() // Fallback for other origins
               .AllowAnyMethod()
               .AllowAnyHeader();
-              
     });
 });
 
@@ -102,14 +99,17 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+// Always enable Swagger on Replit
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "LCARS Command Processor");
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Running Application API");
+    // Make Swagger UI available at the application's root
+    c.RoutePrefix = string.Empty;
+});
+
+// Add a redirect from the root to Swagger UI
+app.MapGet("/", () => Results.Redirect("/index.html"));
 
 app.UseHttpsRedirection();
 
