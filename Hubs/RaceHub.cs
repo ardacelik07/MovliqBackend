@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using System.Security.Claims;
 using RunningApplicationNew.RepositoryLayer;
 using RunningApplicationNew.IRepository;
+using RunningApplicationNew.Entity;
+using Azure.Core;
 
 
 namespace RunningApplicationNew.Hubs
@@ -35,19 +37,31 @@ namespace RunningApplicationNew.Hubs
             await Clients.OthersInGroup($"room-{roomId}").SendAsync("UserJoined", user.UserName);
 
             // Odadaki tüm katılımcıları al
-            var participants = await _raceRoomRepository.GetRoomParticipantNamesAsync(roomId);
+            var participants = await _raceRoomRepository.GetRoomParticipantsWithProfilesAsync(roomId);
 
             // Sadece yeni kullanıcıya mevcut katılımcıları gönder
-            await Clients.Caller.SendAsync("RoomParticipants", participants);
+            // await Clients.Caller.SendAsync("RoomParticipants", participants);
+            await Clients.Group($"room-{roomId}").SendAsync("RoomParticipants", participants);
         }
 
         // Odadan ayrılma
         public async Task LeaveRoom(int roomId)
         {
+            var email = Context.User.FindFirstValue(ClaimTypes.Email);
+            var user = await _userRepository.GetByEmailAsync(email);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"room-{roomId}");
-            await Clients.Group($"room-{roomId}").SendAsync("UserLeft", Context.User.Identity.Name);
+            await Clients.Group($"room-{roomId}").SendAsync("UserLeft", user.UserName);
         }
-        
+        public async Task LeaveRoomDuringRace(int roomId)
+        {
+            var email = Context.User.FindFirstValue(ClaimTypes.Email);
+            var user = await _userRepository.GetByEmailAsync(email);
+            await _raceRoomRepository.ResetUserStatsOnLeaveAsync(user.Id, roomId);
+            await _raceRoomRepository.RemoveUserFromRoomAsync(user.Id, roomId);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"room-{roomId}");
+            await Clients.Group($"room-{roomId}").SendAsync("UserLeft", user.UserName);
+        }
+
         // Konum güncelleme
         public async Task UpdateLocation(int roomId, double distance, int steps)
         {

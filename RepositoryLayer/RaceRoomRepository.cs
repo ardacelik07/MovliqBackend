@@ -2,6 +2,7 @@
 using RunningApplicationNew.Entity;
 using RunningApplicationNew.IRepository;
 using Microsoft.EntityFrameworkCore;
+using RunningApplicationNew.Entity.Dtos;
 
 namespace RunningApplicationNew.RepositoryLayer
 {
@@ -34,6 +35,17 @@ namespace RunningApplicationNew.RepositoryLayer
             var participants = await GetRoomParticipantsAsync(roomId);
             return participants.Select(p => p.UserName).ToList();
         }
+        public async Task<List<RoomParticipantDto>> GetRoomParticipantsWithProfilesAsync(int roomId)
+        {
+            var participants = await GetRoomParticipantsAsync(roomId);
+
+            // Doğrudan RoomParticipantDto nesneleri oluşturun
+            return participants.Select(p => new RoomParticipantDto
+            {
+                UserName = p.UserName,
+                ProfilePictureUrl = p.ProfilePicturePath
+            }).ToList();
+        }
 
         public async Task<RaceRoom> CreateRoomAsync(DateTime startTime, string type, int duration)
         {
@@ -65,6 +77,19 @@ namespace RunningApplicationNew.RepositoryLayer
 
             _context.Set<UserRaceRoom>().Add(userRaceRoom);
             await _context.SaveChangesAsync();
+        }
+        public async Task RemoveUserFromRoomAsync(int userId, int roomId)
+        {
+            // Kullanıcı-oda ilişkisini bul
+            var userRaceRoom = await _context.Set<UserRaceRoom>()
+                                              .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RaceRoomId == roomId);
+
+            // Eğer kullanıcı odaya bağlıysa, ilişkiyi sil
+            if (userRaceRoom != null)
+            {
+                _context.Set<UserRaceRoom>().Remove(userRaceRoom);
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task<int> GetRoomParticipantsCountAsync(int raceRoomId)
@@ -107,6 +132,28 @@ namespace RunningApplicationNew.RepositoryLayer
                 await _context.SaveChangesAsync();
 
                 Console.WriteLine($"Oda {roomId} inaktif yapıldı ve {participants.Count} kullanıcının istatistikleri sıfırlandı.");
+            }
+        }
+        public async Task ResetUserStatsOnLeaveAsync(int userId, int roomId)
+        {
+            // Kullanıcıyı bul
+            var user = await _context.Set<User>().FindAsync(userId);
+
+            if (user != null)
+            {
+                // Kullanıcının mesafe ve adım sayısını sıfırla
+                user.distancekm = 0;
+                user.steps = 0;
+
+                // Değişiklikleri kaydet
+                _context.Set<User>().Update(user);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"Kullanıcı ID: {userId}, Oda ID: {roomId} - yarış esnasında ayrıldı, istatistikleri sıfırlandı.");
+            }
+            else
+            {
+                Console.WriteLine($"Kullanıcı ID: {userId} bulunamadı, istatistikler sıfırlanamadı.");
             }
         }
 

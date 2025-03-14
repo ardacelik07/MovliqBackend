@@ -305,14 +305,22 @@ namespace RunningApplicationNew.Controllers
                     {
                         // Yarışı başlat (StartTime'ı şimdiden 10 saniye sonraya ayarla)
                         eligibleRoom.Status = 2;
-                        eligibleRoom.StartTime = DateTime.Now.AddSeconds(10); 
+                        eligibleRoom.StartTime = DateTime.Now.AddSeconds(16); 
                         await _raceRoomRepository.SaveChangesAsync();
-                        
-                        // SignalR ile odadaki tüm kullanıcılara bildirim gönder
-                        await _hubContext.Clients.Group($"room-{eligibleRoom.Id}").SendAsync("RaceStarting", eligibleRoom.Id, 10);
+
+                        _ = Task.Run(async () =>
+                        {
+                            // 3 saniye bekle
+                            await Task.Delay(6000);
+
+                            // Sonra SignalR ile bildirim gönder
+                            await _hubContext.Clients.Group($"room-{eligibleRoom.Id}")
+                                .SendAsync("RaceStarting", eligibleRoom.Id, 10);
+                        });
+
 
                     }
-                    
+
                     return Ok(new { roomId = eligibleRoom.Id, startTime = eligibleRoom.StartTime });
                 }
                 else
@@ -337,5 +345,38 @@ namespace RunningApplicationNew.Controllers
             }
         }
 
+        [HttpPost("leaveRoom")]
+        [Authorize]
+        public async Task<IActionResult> LeaveRoom([FromBody] LeaveRoomDto request)
+        {
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var user = await _userRepository.GetByEmailAsync(email);
+
+            if (user == null)
+            {
+
+           
+                return NotFound(new { message = "Kullanıcı bulunamadı." });
+             }
+            await _raceRoomRepository.RemoveUserFromRoomAsync(user.Id, request.RaceRoomId);
+            var participants = await _raceRoomRepository.GetRoomParticipantsAsync(request.RaceRoomId);
+
+            // Katılımcılar listesinde silinen kullanıcı var mı?
+            if (!participants.Any())
+            {
+                return Ok(new
+                {
+                    Message = "Odaya katılımcı kalmadı."
+                });
+            }
+
+
+
+
+
+            return Ok(new { message = "User left the room" });
+        }
     }
+
 }
+

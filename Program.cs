@@ -1,3 +1,4 @@
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,15 +13,14 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // CORS Politikası Tanımla
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(MyAllowSpecificOrigins, policy =>
     {
-        policy.WithOrigins("https://*.replit.app", "https://*.repl.co")
-              .SetIsOriginAllowedToAllowWildcardSubdomains()
-              .AllowAnyOrigin() // Fallback for other origins
+        policy.AllowAnyOrigin() // Tüm istemcilere izin ver
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
@@ -66,15 +66,27 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+builder.Services.AddSingleton<Cloudinary>(sp => {
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var account = new Account(
+        configuration["Cloudinary:CloudName"],
+        configuration["Cloudinary:ApiKey"],
+        configuration["Cloudinary:ApiSecret"]);
+
+    return new Cloudinary(account);
+});
 
 // DbContext'i ekle
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
 builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRaceRoomRepository, RaceRoomRepository>();
 builder.Services.AddScoped<IUserResultsRepository, UserResultsRepository>();
+builder.Services.AddScoped<IPhotoService, PhotoService>();
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -99,17 +111,14 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-// Always enable Swagger on Replit
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Running Application API");
-    // Make Swagger UI available at the application's root
-    c.RoutePrefix = string.Empty;
-});
-
-// Add a redirect from the root to Swagger UI
-app.MapGet("/", () => Results.Redirect("/index.html"));
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "LCARS Command Processor");
+    });
+}
 
 app.UseHttpsRedirection();
 

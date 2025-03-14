@@ -11,6 +11,7 @@ using RunningApplicationNew.DataLayer;
 using RunningApplicationNew.IRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
+using RunningApplicationNew.Services;
 
 
 namespace RunningApplicationNew.Controllers
@@ -22,14 +23,15 @@ namespace RunningApplicationNew.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IJwtHelper _jwtHelper;
         private readonly IEmailHelper _emailhelper;
-        
+        private readonly IPhotoService _photoService;
 
-        public UserController(IUserRepository userRepository, IJwtHelper jwtHelper,IEmailHelper emailHelper)
+
+        public UserController(IUserRepository userRepository, IJwtHelper jwtHelper,IEmailHelper emailHelper,IPhotoService photoService)
         {
             _userRepository = userRepository;
             _jwtHelper = jwtHelper;
             _emailhelper = emailHelper;
-            
+            _photoService = photoService;
         }
         
 
@@ -313,48 +315,45 @@ namespace RunningApplicationNew.Controllers
         public async Task<IActionResult> UploadProfilePicture(IFormFile profilePicture)
         {
             if (profilePicture == null || profilePicture.Length == 0)
-            {
                 return BadRequest("Profil fotoğrafı yüklenmedi.");
-            }
 
-            // JWT'den kullanıcı kimliğini al
-            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            if (string.IsNullOrEmpty(token))
-                return Unauthorized("Token bulunamadı.");
-
-            // Token'ı doğrula ve email bilgisi al
-            var emailFromToken = _jwtHelper.ValidateTokenAndGetEmail(token);
-            if (emailFromToken == null)
-                return Unauthorized("Geçersiz token.");
-
-            // Token'dan alınan email ile kullanıcıyı al
-            var user = await _userRepository.GetByEmailAsync(emailFromToken);
-            if (user == null)
-                return Unauthorized("Kullanıcı bulunamadı.");
-
-
-            // Profil fotoğrafını kaydet (örnek olarak local diske kaydetme)
-            var uploadsFolderPath = @"C:\Users\Ali Uyg\source\repos\RunningApplicationNew\RunningApplicationNew\ProfilePhotos\";
-            if (!Directory.Exists(uploadsFolderPath))
+            try
             {
-                Directory.CreateDirectory(uploadsFolderPath);
+                // JWT'den kullanıcı kimliğini al
+                var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized("Token bulunamadı.");
+
+                // Token'ı doğrula ve email bilgisi al
+                var emailFromToken = _jwtHelper.ValidateTokenAndGetEmail(token);
+                if (emailFromToken == null)
+                    return Unauthorized("Geçersiz token.");
+
+                // Token'dan alınan email ile kullanıcıyı al
+                var user = await _userRepository.GetByEmailAsync(emailFromToken);
+                if (user == null)
+                    return Unauthorized("Kullanıcı bulunamadı.");
+
+                // Cloudinary'ye yükle
+                string photoUrl = await _photoService.UploadProfilePhotoAsync(profilePicture, user.Id.ToString());
+
+                // Kullanıcı bilgisini güncelle
+                user.ProfilePicturePath = photoUrl;
+                _userRepository.Update(user);
+                await _userRepository.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = "Profil fotoğrafı başarıyla yüklendi.",
+                    imageUrl = photoUrl
+                });
             }
-
-            var uniqueFileName = $"{Guid.NewGuid()}_{profilePicture.FileName}";
-            var filePath = Path.Combine(uploadsFolderPath, uniqueFileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            catch (Exception ex)
             {
-                await profilePicture.CopyToAsync(stream);
+                return StatusCode(500, $"Profil fotoğrafı yüklenirken hata oluştu: {ex.Message}");
             }
-
-            // Kullanıcıya profil fotoğrafı yolunu kaydet
-            user.ProfilePicturePath = $"/uploads/{uniqueFileName}";
-            _userRepository.Update(user);
-            await _userRepository.SaveChangesAsync();
-
-            return Ok(new { message = "Profil fotoğrafı başarıyla yüklendi.", imagePath = user.ProfilePicturePath });
         }
+
         [HttpPut("update-profile-picture")]
         [Authorize]
         public async Task<IActionResult> UpdateProfilePicture(IFormFile profilePicture)
@@ -512,6 +511,54 @@ namespace RunningApplicationNew.Controllers
             await _userRepository.SaveChangesAsync();
 
             return Ok(new { message = "Şifreniz başarıyla güncellendi." });
+        }
+
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetUserProfile()
+        {
+            try
+            {
+                // JWT'den kullanıcı e-posta bilgisini al
+                var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized("Token bulunamadı.");
+
+                // Token'ı doğrula ve email bilgisi al
+                var emailFromToken = _jwtHelper.ValidateTokenAndGetEmail(token);
+                if (emailFromToken == null)
+                    return Unauthorized("Geçersiz token.");
+
+                // Token'dan alınan email ile kullanıcıyı al
+                var user = await _userRepository.GetByEmailAsync(emailFromToken);
+                if (user == null)
+                    return Unauthorized("Kullanıcı bulunamadı.");
+
+                // Kullanıcının profil bilgilerini döndür
+                return Ok(new
+                {
+                    id = user.Id,
+                    name = user.Name,
+                    surname = user.SurName,
+                    userName = user.UserName,
+                    email = user.Email,
+                    phoneNumber = user.PhoneNumber,
+                    address = user.Address,
+                    age = user.Age,
+                    height = user.Height,
+                    weight = user.Weight,
+                    gender = user.Gender,
+                    birthDay = user.Birthday,
+                    profilePictureUrl = user.ProfilePicturePath,
+                    runPrefer = user.Runprefer,
+                    active = user.Active,
+                    isActive = user.IsActive
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Profil bilgileri alınırken bir hata oluştu: {ex.Message}");
+            }
         }
     }
 
