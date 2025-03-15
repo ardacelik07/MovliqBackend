@@ -53,7 +53,7 @@ namespace RunningApplicationNew.Services
                             Console.WriteLine($"Oda {room.Id} işleniyor... Başlangıç: {room.StartTime}, Süre: {room.Duration} dk"); // Log eklendi
 
                             // Yarış süresi dolmuş mu kontrol et
-                            if (DateTime.UtcNow > room.StartTime.AddMinutes(room.Duration))
+                            if (DateTime.Now > room.StartTime.AddMinutes(room.Duration))
                             {
                                 var userResults = new RaceResultDto
                                 {

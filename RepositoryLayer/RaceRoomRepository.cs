@@ -52,7 +52,7 @@ namespace RunningApplicationNew.RepositoryLayer
             var room = new RaceRoom
             {
                 RoomName = $"Room_{Guid.NewGuid()}",
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 StartTime = startTime,
                 IsActive = true,
                 Status = 1, // Beklemede
@@ -72,7 +72,7 @@ namespace RunningApplicationNew.RepositoryLayer
             {
                 UserId = userId,
                 RaceRoomId = raceRoomId,
-                JoinedAt = DateTime.UtcNow
+                JoinedAt = DateTime.Now
             };
 
             _context.Set<UserRaceRoom>().Add(userRaceRoom);

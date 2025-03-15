@@ -38,7 +38,7 @@ namespace RunningApplicationNew.Helpers
                 issuer: Issuer,
                 audience: Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1), // Token geçerlilik süresi
+                expires: DateTime.Now.AddHours(1), // Token geçerlilik süresi
                 signingCredentials: credentials
             );
 

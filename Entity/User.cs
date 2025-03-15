@@ -36,7 +36,7 @@ namespace RunningApplicationNew.Entity
         [MinLength(6)]
         public string PasswordHash { get; set; } // Şifreler hashlenmiş saklanır
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Kullanıcı oluşturulma tarihi
+        public DateTime CreatedAt { get; set; } = DateTime.Now; // Kullanıcı oluşturulma tarihi
         public bool IsActive { get; set; }  // Kullanıcının aktiflik durumu
 
         public string? ProfilePicturePath { get; set; }

@@ -43,7 +43,7 @@ namespace RunningApplicationNew.Controllers
         [HttpPost("createRoom")]
         public async Task CreateRaceRoom([FromQuery] string roomType, int duration)
         {
-            var nextStartTime = DateTime.UtcNow; 
+            var nextStartTime = DateTime.Now; 
 
             var room = await _raceRoomRepository.CreateRoomAsync(nextStartTime, roomType,duration);
 
@@ -236,7 +236,7 @@ namespace RunningApplicationNew.Controllers
                     {
                         // Yarışı başlat (StartTime'ı şimdiden 10 saniye sonraya ayarla)
                         eligibleRoom.Status = 2;
-                        eligibleRoom.StartTime = DateTime.UtcNow.AddSeconds(16); 
+                        eligibleRoom.StartTime = DateTime.Now.AddSeconds(16); 
                         await _raceRoomRepository.SaveChangesAsync();
 
                         _ = Task.Run(async () =>
@@ -257,7 +257,7 @@ namespace RunningApplicationNew.Controllers
                 else
                 {
                     // Uygun oda bulunamadı, yeni oda oluştur
-                    var startTime = DateTime.UtcNow.AddMinutes(2); // 2 dakika bekleme süresi
+                    var startTime = DateTime.Now.AddMinutes(2); // 2 dakika bekleme süresi
                     var newRoom = await _raceRoomRepository.CreateRoomAsync(startTime, request.RoomType, request.Duration);
                     
                     // Kullanıcıyı yeni odaya ekle
