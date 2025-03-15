@@ -56,10 +56,12 @@ namespace RunningApplicationNew.Entity
         public int Calories { get; set; }
 
         public int AverageSpeed { get; set; }
-
+        
         public int? Runprefer { get; set; }
 
         public DateTime? Birthday { get; set; }
+
+        public LeaderBoard LeaderBoard { get; set; }
 
 
 

@@ -22,6 +22,34 @@ namespace RunningApplicationNew.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("RunningApplicationNew.Entity.LeaderBoard", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("IndoorSteps")
+                        .HasColumnType("int");
+
+                    b.Property<double>("OeneralDistance")
+                        .HasColumnType("float");
+
+                    b.Property<int>("OutdoorSteps")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("LeaderBoards");
+                });
+
             modelBuilder.Entity("RunningApplicationNew.Entity.RaceRoom", b =>
                 {
                     b.Property<int>("Id")
@@ -221,6 +249,17 @@ namespace RunningApplicationNew.Migrations
                     b.ToTable("UserResults");
                 });
 
+            modelBuilder.Entity("RunningApplicationNew.Entity.LeaderBoard", b =>
+                {
+                    b.HasOne("RunningApplicationNew.Entity.User", "User")
+                        .WithOne("LeaderBoard")
+                        .HasForeignKey("RunningApplicationNew.Entity.LeaderBoard", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("RunningApplicationNew.Entity.UserRaceRoom", b =>
                 {
                     b.HasOne("RunningApplicationNew.Entity.RaceRoom", "RaceRoom")
@@ -238,6 +277,12 @@ namespace RunningApplicationNew.Migrations
                     b.Navigation("RaceRoom");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RunningApplicationNew.Entity.User", b =>
+                {
+                    b.Navigation("LeaderBoard")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

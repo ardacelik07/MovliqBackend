@@ -62,7 +62,7 @@ namespace RunningApplicationNew.RepositoryLayer
                     Duration = roominfos.RoomDuration
 
                 };
-                    _context.Set<UserResults>().Update(userResults);
+                    _context.Set<UserResults>().Add(userResults);
                 }
 
                 // TÜM DEĞİŞİKLİKLERİ BİR KEZ KAYDET
