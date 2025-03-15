@@ -21,5 +21,6 @@ namespace RunningApplicationNew.RepositoryLayer
         Task UpdateUserStatsAsync(int userId, int roomId, double distance, int steps);
         Task ResetUserStatsOnLeaveAsync(int userId, int roomId);
         Task<List<RoomParticipantDto>> GetRoomParticipantsWithProfilesAsync(int roomId);
+        
     }
 }

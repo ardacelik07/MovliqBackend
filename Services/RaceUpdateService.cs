@@ -8,6 +8,8 @@ using RunningApplicationNew.Hubs;
 using RunningApplicationNew.IRepository;
 using System.Linq;
 using RunningApplicationNew.RepositoryLayer;
+using RunningApplicationNew.Entity;
+using RunningApplicationNew.Entity.Dtos;
 
 namespace RunningApplicationNew.Services
 {
@@ -51,9 +53,19 @@ namespace RunningApplicationNew.Services
                             Console.WriteLine($"Oda {room.Id} işleniyor... Başlangıç: {room.StartTime}, Süre: {room.Duration} dk"); // Log eklendi
 
                             // Yarış süresi dolmuş mu kontrol et
-                            if (DateTime.Now > room.StartTime.AddMinutes(room.Duration))
+                            if (DateTime.UtcNow > room.StartTime.AddMinutes(room.Duration))
                             {
-                                // Yarışı bitir
+                                var userResults = new RaceResultDto
+                                {
+                                    roomId = room.Id,
+                                    RoomDuration = room.Duration,
+                                    RoomName = room.RoomName,
+                                    RoomType = room.Type,
+                                    startTime = room.StartTime
+
+                                };
+
+                                await userResultsRepository.AddUserRacesResults(userResults);
                                 await raceRoomRepository.SetRoomInactiveAsync(room.Id);
                                 await _hubContext.Clients.Group($"room-{room.Id}").SendAsync("RaceEnded", room.Id);
                                

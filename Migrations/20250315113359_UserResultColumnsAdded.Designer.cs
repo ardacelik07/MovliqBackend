@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RunningApplicationNew.DataLayer;
 
@@ -11,9 +12,11 @@ using RunningApplicationNew.DataLayer;
 namespace RunningApplicationNew.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250315113359_UserResultColumnsAdded")]
+    partial class UserResultColumnsAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,14 +84,8 @@ namespace RunningApplicationNew.Migrations
                     b.Property<int?>("Age")
                         .HasColumnType("int");
 
-                    b.Property<int>("AverageSpeed")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("Birthday")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("Calories")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -177,43 +174,47 @@ namespace RunningApplicationNew.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("Calories")
+                    b.Property<int>("Calories")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Duration")
+                    b.Property<int>("Duration")
                         .HasColumnType("int");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("Rank")
+                    b.Property<int>("Rank")
                         .HasColumnType("int");
 
-                    b.Property<int?>("RoomId")
+                    b.Property<int>("RoomId")
                         .HasColumnType("int");
 
                     b.Property<string>("RoomName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RoomType")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("StartTime")
+                    b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("avarageSpeed")
+                    b.Property<int>("avarageSpeed")
                         .HasColumnType("int");
 
-                    b.Property<double?>("distancekm")
+                    b.Property<double>("distancekm")
                         .HasColumnType("float");
 
-                    b.Property<double?>("steps")
+                    b.Property<double>("steps")
                         .HasColumnType("float");
 
                     b.HasKey("Id");
