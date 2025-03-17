@@ -86,6 +86,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRaceRoomRepository, RaceRoomRepository>();
 builder.Services.AddScoped<IUserResultsRepository, UserResultsRepository>();
 builder.Services.AddScoped<IPhotoService, PhotoService>();
+builder.Services.AddScoped<ILeaderBoardRepository, LeaderBoardRepository>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

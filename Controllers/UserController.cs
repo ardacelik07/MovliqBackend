@@ -235,6 +235,7 @@ namespace RunningApplicationNew.Controllers
             // Kullanıcıyı repository'den al
             var user = await _userRepository.GetByEmailAsync(email);
 
+
             if (user == null)
                 return NotFound("Kullanıcı bulunamadı.");
 

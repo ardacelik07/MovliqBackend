@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RunningApplicationNew.DataLayer;
 
@@ -11,9 +12,11 @@ using RunningApplicationNew.DataLayer;
 namespace RunningApplicationNew.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250315122255_UserResultNullable")]
+    partial class UserResultNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,34 +24,6 @@ namespace RunningApplicationNew.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("RunningApplicationNew.Entity.LeaderBoard", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<double?>("GeneralDistance")
-                        .HasColumnType("float");
-
-                    b.Property<int?>("IndoorSteps")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("OutdoorSteps")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("LeaderBoards");
-                });
 
             modelBuilder.Entity("RunningApplicationNew.Entity.RaceRoom", b =>
                 {
@@ -168,8 +143,8 @@ namespace RunningApplicationNew.Migrations
                     b.Property<double?>("distancekm")
                         .HasColumnType("float");
 
-                    b.Property<int?>("steps")
-                        .HasColumnType("int");
+                    b.Property<double?>("steps")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -249,17 +224,6 @@ namespace RunningApplicationNew.Migrations
                     b.ToTable("UserResults");
                 });
 
-            modelBuilder.Entity("RunningApplicationNew.Entity.LeaderBoard", b =>
-                {
-                    b.HasOne("RunningApplicationNew.Entity.User", "User")
-                        .WithOne("LeaderBoard")
-                        .HasForeignKey("RunningApplicationNew.Entity.LeaderBoard", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("RunningApplicationNew.Entity.UserRaceRoom", b =>
                 {
                     b.HasOne("RunningApplicationNew.Entity.RaceRoom", "RaceRoom")
@@ -277,12 +241,6 @@ namespace RunningApplicationNew.Migrations
                     b.Navigation("RaceRoom");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("RunningApplicationNew.Entity.User", b =>
-                {
-                    b.Navigation("LeaderBoard")
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

@@ -8,6 +8,8 @@ using RunningApplicationNew.Hubs;
 using RunningApplicationNew.IRepository;
 using System.Linq;
 using RunningApplicationNew.RepositoryLayer;
+using RunningApplicationNew.Entity;
+using RunningApplicationNew.Entity.Dtos;
 
 namespace RunningApplicationNew.Services
 {
@@ -39,6 +41,7 @@ namespace RunningApplicationNew.Services
                         // Scope içinden repository'leri al
                         var raceRoomRepository = scope.ServiceProvider.GetRequiredService<IRaceRoomRepository>();
                         var userResultsRepository = scope.ServiceProvider.GetRequiredService<IUserResultsRepository>();
+                        var LeaderBoardRepository = scope.ServiceProvider.GetRequiredService<ILeaderBoardRepository>();
 
                         Console.WriteLine("Aktif yarışlar taranıyor..."); // Log eklendi
 
@@ -53,7 +56,19 @@ namespace RunningApplicationNew.Services
                             // Yarış süresi dolmuş mu kontrol et
                             if (DateTime.Now > room.StartTime.AddMinutes(room.Duration))
                             {
-                                // Yarışı bitir
+                                var userResults = new RaceResultDto
+                                {
+                                    roomId = room.Id,
+                                    RoomDuration = room.Duration,
+                                    RoomName = room.RoomName,
+                                    RoomType = room.Type,
+                                    startTime = room.StartTime
+
+                                };
+
+
+                                await LeaderBoardRepository.UpdateLeaderBoardAsync(room.Id, room.Type);
+                                await userResultsRepository.AddUserRacesResults(userResults);
                                 await raceRoomRepository.SetRoomInactiveAsync(room.Id);
                                 await _hubContext.Clients.Group($"room-{room.Id}").SendAsync("RaceEnded", room.Id);
                                

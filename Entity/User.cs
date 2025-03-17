@@ -36,14 +36,14 @@ namespace RunningApplicationNew.Entity
         [MinLength(6)]
         public string PasswordHash { get; set; } // Şifreler hashlenmiş saklanır
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Kullanıcı oluşturulma tarihi
+        public DateTime CreatedAt { get; set; } = DateTime.Now; // Kullanıcı oluşturulma tarihi
         public bool IsActive { get; set; }  // Kullanıcının aktiflik durumu
 
         public string? ProfilePicturePath { get; set; }
 
         public double? distancekm { get; set; }
 
-        public double? steps { get; set; }
+        public int? steps { get; set; }
 
         public int? Rank { get; set; }
 
@@ -53,9 +53,15 @@ namespace RunningApplicationNew.Entity
 
         public int? Active { get; set; }
 
+        public int Calories { get; set; }
+
+        public int AverageSpeed { get; set; }
+        
         public int? Runprefer { get; set; }
 
         public DateTime? Birthday { get; set; }
+
+        public LeaderBoard LeaderBoard { get; set; }
 
 
 

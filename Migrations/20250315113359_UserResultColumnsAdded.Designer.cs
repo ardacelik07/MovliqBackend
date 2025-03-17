@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RunningApplicationNew.DataLayer;
 
@@ -11,9 +12,11 @@ using RunningApplicationNew.DataLayer;
 namespace RunningApplicationNew.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250315113359_UserResultColumnsAdded")]
+    partial class UserResultColumnsAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,34 +24,6 @@ namespace RunningApplicationNew.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("RunningApplicationNew.Entity.LeaderBoard", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<double?>("GeneralDistance")
-                        .HasColumnType("float");
-
-                    b.Property<int?>("IndoorSteps")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("OutdoorSteps")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("LeaderBoards");
-                });
 
             modelBuilder.Entity("RunningApplicationNew.Entity.RaceRoom", b =>
                 {
@@ -109,14 +84,8 @@ namespace RunningApplicationNew.Migrations
                     b.Property<int?>("Age")
                         .HasColumnType("int");
 
-                    b.Property<int>("AverageSpeed")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("Birthday")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("Calories")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -168,8 +137,8 @@ namespace RunningApplicationNew.Migrations
                     b.Property<double?>("distancekm")
                         .HasColumnType("float");
 
-                    b.Property<int?>("steps")
-                        .HasColumnType("int");
+                    b.Property<double?>("steps")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -205,59 +174,52 @@ namespace RunningApplicationNew.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("Calories")
+                    b.Property<int>("Calories")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Duration")
+                    b.Property<int>("Duration")
                         .HasColumnType("int");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("Rank")
+                    b.Property<int>("Rank")
                         .HasColumnType("int");
 
-                    b.Property<int?>("RoomId")
+                    b.Property<int>("RoomId")
                         .HasColumnType("int");
 
                     b.Property<string>("RoomName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RoomType")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("StartTime")
+                    b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("avarageSpeed")
+                    b.Property<int>("avarageSpeed")
                         .HasColumnType("int");
 
-                    b.Property<double?>("distancekm")
+                    b.Property<double>("distancekm")
                         .HasColumnType("float");
 
-                    b.Property<double?>("steps")
+                    b.Property<double>("steps")
                         .HasColumnType("float");
 
                     b.HasKey("Id");
 
                     b.ToTable("UserResults");
-                });
-
-            modelBuilder.Entity("RunningApplicationNew.Entity.LeaderBoard", b =>
-                {
-                    b.HasOne("RunningApplicationNew.Entity.User", "User")
-                        .WithOne("LeaderBoard")
-                        .HasForeignKey("RunningApplicationNew.Entity.LeaderBoard", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("RunningApplicationNew.Entity.UserRaceRoom", b =>
@@ -277,12 +239,6 @@ namespace RunningApplicationNew.Migrations
                     b.Navigation("RaceRoom");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("RunningApplicationNew.Entity.User", b =>
-                {
-                    b.Navigation("LeaderBoard")
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

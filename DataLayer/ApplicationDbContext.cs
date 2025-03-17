@@ -18,6 +18,7 @@
             public DbSet<UserRaceRoom> UserRaceRooms { get; set; }
 
             public DbSet<UserResults> UserResults { get; set; }
+            public DbSet<LeaderBoard> LeaderBoards { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
             {
@@ -31,6 +32,12 @@
                     .HasKey(ur => new { ur.UserId, ur.RaceRoomId });
 
             // Varsayılan değerler veya diğer kurallar burada eklenebilir
+
+            // User ve LeaderBoard arasında birebir ilişki tanımlama
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.LeaderBoard)
+                .WithOne(lb => lb.User)
+                .HasForeignKey<LeaderBoard>(lb => lb.UserId);
         }
         }
 }
