@@ -29,8 +29,10 @@ namespace RunningApplicationNew.Controllers
         private readonly IHubContext<RaceHub> _hubContext;
         private readonly IJwtHelper _jwtHelper;
         private readonly IEmailHelper _emailhelper;
+        private readonly ILeaderBoardRepository _leaderBoardRepository;
 
-        public LeaderBoardController(IUserRepository userRepository, IRaceRoomRepository raceRoomRepository, IJwtHelper jwtHelper, IEmailHelper emailHelper, IUserResultsRepository userResultsRepository, IHubContext<RaceHub> hubContext)
+
+        public LeaderBoardController(IUserRepository userRepository, IRaceRoomRepository raceRoomRepository, IJwtHelper jwtHelper, IEmailHelper emailHelper, IUserResultsRepository userResultsRepository, IHubContext<RaceHub> hubContext,ILeaderBoardRepository leaderBoardRepository)
         {
             _userRepository = userRepository;
             _jwtHelper = jwtHelper;
@@ -38,6 +40,35 @@ namespace RunningApplicationNew.Controllers
             _raceRoomRepository = raceRoomRepository;
             _userResultsRepository = userResultsRepository;
             _hubContext = hubContext;
+            _leaderBoardRepository = leaderBoardRepository;
         }
+
+
+        [HttpGet("GetAllLeaderboard")]
+        public async Task<IActionResult> GetAllRooms(string type)
+        {
+
+
+            if(type== "indoor")
+            {
+
+                var leaderboardresult = await _leaderBoardRepository.GetAllLeaderBoardIndoor();
+
+                return Ok(leaderboardresult);
+            }
+            else if(type == "outdoor"){
+                var leaderboardresult = await _leaderBoardRepository.GetAllLeaderBoardOutdoor();
+
+                return Ok(leaderboardresult);
+            }
+
+            return BadRequest("table can not load");
+           
+
+
+        }
+
     }
+
+
     }

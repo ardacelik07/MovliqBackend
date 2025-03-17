@@ -43,7 +43,7 @@ namespace RunningApplicationNew.Entity
 
         public double? distancekm { get; set; }
 
-        public double? steps { get; set; }
+        public int? steps { get; set; }
 
         public int? Rank { get; set; }
 
