@@ -9,5 +9,7 @@
         public int? OutdoorSteps { get; set; }
 
         public double? GeneralDistance { get; set; }
+
+        public string? profilePicture { get; set; }
     }
 }
