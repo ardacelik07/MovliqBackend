@@ -76,7 +76,8 @@ namespace RunningApplicationNew.RepositoryLayer
                 {
                     Id = lb.Id,
                     UserId = lb.UserId,
-                    UserName = lb.User.UserName, // User tablosundan username
+                    UserName = lb.User.UserName,
+                    profilePicture = lb.User.ProfilePicturePath,// User tablosundan username
                     IndoorSteps = lb.IndoorSteps
                 })
                 .ToListAsync();
@@ -92,6 +93,7 @@ namespace RunningApplicationNew.RepositoryLayer
                     Id = lb.Id,
                     UserId = lb.UserId,
                     UserName = lb.User.UserName,
+                    profilePicture = lb.User.ProfilePicturePath,
                     OutdoorSteps = lb.OutdoorSteps,
                     GeneralDistance= lb.GeneralDistance// User tablosundan username
                     
