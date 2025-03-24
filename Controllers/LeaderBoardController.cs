@@ -68,7 +68,38 @@ namespace RunningApplicationNew.Controllers
 
         }
 
+    
+      [HttpGet("GetUserByIdLeaderBoardRanks")]
+        public async Task<IActionResult> GetUserByIdLeaderBoardRanks()
+        {
+            try
+            {
+                var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized("Token bulunamadý.");
+
+                // Token'ý doðrula ve email bilgisi al
+                var emailFromToken = _jwtHelper.ValidateTokenAndGetEmail(token);
+                if (emailFromToken == null)
+                    return Unauthorized("Geçersiz token.");
+
+                var user = await _userRepository.GetByEmailAsync(emailFromToken);
+                if (user == null)
+                    return NotFound("Kullanýcý bulunamadý.");
+
+                // await ekledik
+                var ranks = await _leaderBoardRepository.GetLeaderboardRankById(user.Id);
+
+                return Ok(ranks);
+            }
+            catch (Exception ex)
+            {
+                // Hata yönetimi ekledik
+                return StatusCode(500, $"Bir hata oluþtu: {ex.Message}");
+            }
+        }
+
     }
 
 
-    }
+}

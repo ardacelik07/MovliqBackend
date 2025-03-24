@@ -10,5 +10,6 @@ namespace RunningApplicationNew.RepositoryLayer
         Task UpdateLeaderBoardAsync(int roomId, string raceType);
         Task<List<LeaderBoardIndoorDto>> GetAllLeaderBoardIndoor();
         Task<List<LeaderBoardOutdoorDto>> GetAllLeaderBoardOutdoor();
+        Task<LeaderBoardRankDto> GetLeaderboardRankById(int userId);
     }
 }

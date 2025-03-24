@@ -178,6 +178,73 @@ namespace RunningApplicationNew.Controllers
 
 
         }
+        [HttpGet("GetUserActivities")]
+        public async Task<IActionResult> GetUserRecordActivities(string type, string period)
+        {
+
+
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized("Token bulunamadı.");
+
+            // Token'ı doğrula ve email bilgisi al
+            var emailFromToken = _jwtHelper.ValidateTokenAndGetEmail(token);
+            if (emailFromToken == null)
+                return Unauthorized("Geçersiz token.");
+
+
+
+            var recordresults = await _userResultsRepository.GetUserActivityResult(emailFromToken, type, period);
+
+            return Ok(recordresults);
+
+
+        }
+        [HttpGet("GetUserLastThreeActivities")]
+        public async Task<IActionResult> GetUserLastThreeActivities()
+        {
+
+
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized("Token bulunamadı.");
+
+            // Token'ı doğrula ve email bilgisi al
+            var emailFromToken = _jwtHelper.ValidateTokenAndGetEmail(token);
+            if (emailFromToken == null)
+                return Unauthorized("Geçersiz token.");
+
+
+
+            var recordresults = await _userResultsRepository.GetLastThreeActivities(emailFromToken);
+
+            return Ok(recordresults);
+
+
+        }
+        [HttpGet("UserStreakTrack")]
+        public async Task<IActionResult> UserStreakTrack()
+        {
+
+
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized("Token bulunamadı.");
+
+            // Token'ı doğrula ve email bilgisi al
+            var emailFromToken = _jwtHelper.ValidateTokenAndGetEmail(token);
+            if (emailFromToken == null)
+                return Unauthorized("Geçersiz token.");
+
+
+
+            var recordresults = await _userResultsRepository.UserStreakTrack(emailFromToken);
+
+            return Ok(recordresults);
+
+
+        }
 
     }
+   
 }

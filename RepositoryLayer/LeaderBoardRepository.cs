@@ -100,5 +100,25 @@ namespace RunningApplicationNew.RepositoryLayer
                 })
                 .ToListAsync();
         }
+
+        public async Task<LeaderBoardRankDto> GetLeaderboardRankById(int userId)
+        {
+            var user = await _context.Set<LeaderBoard>()
+                .FirstOrDefaultAsync(lb => lb.UserId == userId);
+
+            
+
+            var indoorRank = await _context.Set<LeaderBoard>()
+                .CountAsync(x => x.IndoorSteps > user.IndoorSteps) + 1;
+
+            var outdoorRank = await _context.Set<LeaderBoard>()
+                .CountAsync(x => x.GeneralDistance > user.GeneralDistance) + 1;
+
+            return new LeaderBoardRankDto
+            {
+                IndoorRank = indoorRank,
+                OutdoorRank = outdoorRank
+            };
+        }
     }
 }

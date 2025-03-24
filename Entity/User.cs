@@ -59,6 +59,8 @@ namespace RunningApplicationNew.Entity
         
         public int? Runprefer { get; set; }
 
+        public int? streak { get; set; }
+
         public DateTime? Birthday { get; set; }
 
         public LeaderBoard LeaderBoard { get; set; }

@@ -9,5 +9,8 @@ namespace RunningApplicationNew.RepositoryLayer
         Task<List<string>> GetRoomNamesByEmailAsync(string email);
         Task<List<UserResults>> GetUserRecordResult(string email);
         Task AddUserRacesResults(RaceResultDto roominfos);
+        Task<List<UserResults>> GetUserActivityResult(string email, string type, string period);
+        Task<List<UserResults>> GetLastThreeActivities(string email);
+        Task<int> UserStreakTrack(string email);
     }
 }
