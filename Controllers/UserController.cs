@@ -223,7 +223,8 @@ namespace RunningApplicationNew.Controllers
             _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();
 
-            return Ok("Profil bilgileri başarıyla güncellendi.");
+            var updatedtoken = _jwtHelper.GenerateJwtToken(user);
+            return Ok(new { Token = updatedtoken });
         }
         [HttpGet("get-by-email/{email}")]
         [Authorize] // Yetkilendirme gerektirir
